@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MaiLLM</title>
+  <style>
+    body { 
+      width: 400px; 
+      padding: 15px; 
+      font-family: Arial, sans-serif; 
+    }
+    #labelInstructions { 
+      width: 100%; 
+      height: 100px; 
+      margin-bottom: 10px; 
+    }
+    #status {
+      margin-top: 10px;
+      padding: 10px;
+    }
+    .error {
+      color: red;
+      background-color: #ffeeee;
+      border: 1px solid red;
+      padding: 5px;
+    }
+    .success {
+      color: green;
+      background-color: #eeffee;
+      border: 1px solid green;
+      padding: 5px;
+    }
+    .error-stack {
+      font-size: 0.8em;
+      color: #666;
+      max-height: 100px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 5px;
+    }
+    .results ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .results li {
+      margin-bottom: 5px;
+      padding: 5px;
+      background-color: #f4f4f4;
+    }
+    .error-item {
+      color: red;
+    }
+    #closeExtension {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <button id="closeExtension">&times;</button>
+  <h2>MaiLLM</h2>
+  <textarea id="labelInstructions" placeholder="Enter your labeling instructions (e.g., 'Label emails from work colleagues')"></textarea>
+  <button id="startLabeling">Start AI Labeling</button>
+<div id="status"></div>
+  
+  <!-- <button id="generateThreadSummary">Generate thread summary</button>
+  <div id="status"></div>  -->
+
+  <script src="popup.js"></script>
+</body>
+</html>

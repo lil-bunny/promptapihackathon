@@ -1,0 +1,43 @@
+{
+    "manifest_version": 3,
+    "name": "Gmail AI Auto-Labeler",
+    "version": "1.0",
+    "description": "Automatically label emails using AI",
+    "permissions": [
+      "identity",
+      "storage",
+      "activeTab",
+      "tabs"
+
+    ],
+
+    "content_scripts": [
+      {
+        "matches": ["https://mail.google.com/*","https://*.mail.google.com/*"],
+        "js": ["contentthread.js"],
+        "run_at": "document_idle"
+      }
+    ],
+   
+
+    "host_permissions": [
+        "https://www.googleapis.com/gmail/v1/*",
+        "https://mail.google.com/*"
+      ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+ 
+    },
+
+    "oauth2": {
+      "client_id": "112028648234-b0uc739e8v3h6hcee75f96kqa6jh7qdj.apps.googleusercontent.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/gmail.modify"
+      ]
+    }
+  }
+
+  
