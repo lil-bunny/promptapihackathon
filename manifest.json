@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Gmail AI Auto-Labeler",
+    "name": "MaiLLM",
     "version": "1.0",
-    "description": "Automatically label emails using AI",
+    "description": "Your ondevice ai email assistant ",
     "permissions": [
       "identity",
       "storage",

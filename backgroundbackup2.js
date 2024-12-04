@@ -1,22 +1,4 @@
 // Utility functions for email processing
-
-function getLabelColor(labelName) {
-  // Normalize the label name for case-insensitive comparison
-  const normalizedLabel = labelName.trim().toLowerCase();
-
-  // Define colors for specific labels
-  const labelColors = {
-    work: '#D8BFD8',      // Light purple
-    urgent: '#D8BFD8',    // Light purple
-    important: '#D8BFD8', // Light purple
-    updates: '#D8BFD8'    // Light purple
-  };
-
-  // Return the matching color or light gray as fallback
-  return labelColors[normalizedLabel] || '#E5E5E5'; // Default to light gray
-}
-
-
 const EmailUtils = {
     async fetchEmails(token, maxResults = 10) {
       try {
@@ -92,39 +74,8 @@ const EmailUtils = {
       }
     },
   
-    // async generateEmailReply(emailContent, userContext = {}) {
-    //   try {
-    //     const ai = await OnDeviceAIHandler.initializeAI();
-        
-    //     const llmModel = 
-    //       await (ai.languageModel?.create?.() || 
-    //              ai.createLanguageModel?.() || 
-    //              ai.models?.languageModel?.create?.());
-  
-    //     if (!llmModel) {
-    //       throw new Error('Could not create language model');
-    //     }
-        
-    //     const replyPrompt = `
-    //    Create a proper reply for  this mail i received. 
-    //    Sender mail: ${emailContent}
-         
-    //    `;
-
-  
-    //     const reply = await llmModel.prompt(replyPrompt);
-        
-    //     return this.sanitizeReply(reply);
-    //   } catch (error) {
-    //     console.error('AI Reply Generation Error:', error);
-    //     return this.getFallbackReply();
-    //   }
-    // },
-
     async generateEmailReply(emailContent, userContext = {}) {
       try {
-        // Parse the stringified context
-        const context = JSON.parse(emailContent);
         const ai = await OnDeviceAIHandler.initializeAI();
         
         const llmModel = 
@@ -135,18 +86,28 @@ const EmailUtils = {
         if (!llmModel) {
           throw new Error('Could not create language model');
         }
-        const replyPrompt = `
-        Generate a professional email reply based on:
-        
-        Original Email that the User received:
-        ${context.originalEmail}
-        
-        User's Draft :
-        ${context.userDraft}
-            
-        If user has draft, enhance and refine and rewrite it based of user draft and  if no draft then create a comprehensive reply.Maintain professionalism
-        Give only the reply mail and no other extra texts`;
-        console.log(replyPrompt)
+  
+        const replyPrompt = `Generate a professional email reply based on the following email content:
+  
+  Context:
+  - Sender's Email Content: ${emailContent.substring(0, 500)}
+  - User Context: ${JSON.stringify(userContext)}
+  
+  Guidelines:
+  1. Tone: Professional and courteous
+  2. Length: 3-5 sentences
+  3. Structure:
+     - Brief acknowledgment
+     - Direct response to key points
+     - Clear next steps or call to action
+  4. Avoid technical jargon
+  5. Proofread for clarity and grammar
+  
+  IMPORTANT:
+  - Be concise
+  - Reflect the sender's communication style
+  - Provide actionable response`;
+  
         const reply = await llmModel.prompt(replyPrompt);
         
         return this.sanitizeReply(reply);
@@ -239,7 +200,7 @@ const EmailUtils = {
       }
     },
   
-    async applyLabel(token, messageId, labelName,labelColor) {
+    async applyLabel(token, messageId, labelName) {
       try {
         const labelsResponse = await fetch(
           'https://gmail.googleapis.com/gmail/v1/users/me/labels', 
@@ -267,14 +228,7 @@ const EmailUtils = {
               body: JSON.stringify({
                 name: labelName,
                 labelListVisibility: 'labelShow',
-                messageListVisibility: 'show',
-                // color: {
-                //   backgroundColor: labelColor
-                  
-                //  , // Yellow background
-                //   textColor: "#000000" // Black text
-                // }
-
+                messageListVisibility: 'show'
               })
             }
           );
@@ -327,45 +281,6 @@ const EmailUtils = {
       throw new Error('On-device AI is not available');
     }
   
-
-
-    static async colorLabel(labelname){
-      try {
-        const ai = await this.initializeAI();
-        
-        const llmModel = 
-          await (ai.languageModel?.create?.() || 
-                 ai.createLanguageModel?.() || 
-                 ai.models?.languageModel?.create?.());
-  
-        if (!llmModel) {
-          throw new Error('Could not create language model');
-        }
-  
-        const labelPrompt = `Based on the given label return a proper hex color value
-  
-  Given Label:
-  ${labelname}
-  
- 
-  Follow Instruction:
-  - if label is very important return #800080
-  - if label is medium important return #008000
-  - if label is less important return  #FFFF00
-  - if not important then return #FF0000
-
-  Just return the appropriate hex color value
-  from above  as response and no other text
-  `
-
-  const response = await llmModel.prompt(labelPrompt);
-  console.log('label color=',response)
-  return response
-      } catch (error) {
-        console.log('Comprehensive label generation error:', error);
-        return  "#E5E5E5";
-      }
-    }
     static async generateLabel(emailContent, userInstructions) {
       if (!emailContent || 
           (typeof emailContent === 'string' && 
@@ -391,7 +306,7 @@ const EmailUtils = {
   Respond with ONE word label (max 15 chars).
   
   Email Snippet:
-  ${emailContent}
+  ${emailContent.substring(0, 500)}
   
   Context:
   ${userInstructions}
@@ -457,103 +372,8 @@ const EmailUtils = {
     }
   }
   
-
-
-
   // Main message listener
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-
-
-
-
-    if (request.action === 'generateEmailSummary') {
-        (async () => {
-            try {
-                // Prepare the prompt for AI summary generation
-                const summaryPrompt = `
-
-Email Content:
-${request.emailContent}
-
-Generate a concise, professional summary of the above email:
-Summary Guidelines:
-- Capture the most important points
-- Be clear and succinct
-- Extract key information, main purpose, and critical details
-- Maintain a neutral, professional tone
-- Limit to 3-4 sentences`;
-
-
-// const summaryPrompt = `
-// Generate a concise summary of the following email. 
-
-// Email Content:
-// ${request.emailContent}
-
-// IMPORTANT:
-// - Capture key points and main ideas
-// - Adjust detail level based on length scale
-// - Maintain clarity and coherence
-// `;
-
-console.log(summaryPrompt)
-const ai = await OnDeviceAIHandler.initializeAI();
-        
-const llmModel = 
-  await (ai.languageModel?.create?.() || 
-         ai.createLanguageModel?.() || 
-         ai.models?.languageModel?.create?.());
-
-if (!llmModel) {
-  throw new Error('Could not create language model');
-}
-const summary = await llmModel.prompt(summaryPrompt);
-
-              
-                sendResponse({
-                    success: true,
-                    summary: summary
-                });
-            } catch (error) {
-                console.log('Summary generation error:', error);
-                sendResponse({
-                    success: false,
-                    error: error.message
-                });
-            }
-        })();
-
-        // Return true to indicate async response
-        return true;
-    }
-
-
-
-
-
-    if (request.action === 'generateAIReply') {
-      chrome.identity.getAuthToken({ interactive: false }, async (token) => {
-        try {
-          const replyContent = await EmailUtils.generateEmailReply(request.emailContent);
-          
-          sendResponse({ 
-            success: true, 
-            replyContent: replyContent 
-          });
-        } catch (error) {
-          sendResponse({ 
-            success: false, 
-            error: error.message 
-          });
-        }
-      });
-      
-      return true; // Indicates we'll send response asynchronously
-    }
-    if(request.action=='extractThreadText'){
-
-    console.log("dadur bichiiiiiiiii")
-    }
     if (request.action === 'startLabeling') {
       chrome.identity.getAuthToken({ interactive: false }, async (token) => {
         try {
@@ -568,29 +388,29 @@ const summary = await llmModel.prompt(summaryPrompt);
                 emailContent, 
                 request.instructions || 'Automatically categorize email'
               );
-              console.log("labelName",labelName)
+  
               const labelApplied = labelName ? 
-                await EmailUtils.applyLabel(token, email.id, labelName,getLabelColor(labelName)) : 
+                await EmailUtils.applyLabel(token, email.id, labelName) : 
                 false;
   
-              // const replyContent = await EmailUtils.generateEmailReply(
-              //   emailContent, 
-              //   request.userContext || {}
-              // );
+              const replyContent = await EmailUtils.generateEmailReply(
+                emailContent, 
+                request.userContext || {}
+              );
   
-              // const draftResult = await EmailUtils.createEmailDraft(
-              //   token, 
-              //   email.id, 
-              //   replyContent
-              // );
+              const draftResult = await EmailUtils.createEmailDraft(
+                token, 
+                email.id, 
+                replyContent
+              );
   
               processResults.push({
                 emailId: email.id,
                 label: labelName,
                 labelApplied: labelApplied,
-                // replyGenerated: !!replyContent,
-                // draftCreated: draftResult.success,
-                // draftId: draftResult.draftId
+                replyGenerated: !!replyContent,
+                draftCreated: draftResult.success,
+                draftId: draftResult.draftId
               });
             } catch (emailError) {
               console.error('Email Processing Error:', emailError);
@@ -619,5 +439,3 @@ const summary = await llmModel.prompt(summaryPrompt);
   });
   
   console.log('Enhanced Gmail AI Assistant Background Script Loaded');
-
-
